@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实用德州扑克AI助手 - Vercel版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        .poker-table {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .poker-table { grid-template-columns: 1fr; }
+        }
+        
+        .input-section, .result-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .card-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .card-input input {
+            text-align: center;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 10px 0;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn.success {
+            background: #27ae60;
+        }
+        
+        .btn.success:hover {
+            background: #229954;
+        }
+        
+        .actions-display {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .action-card {
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .action-card.recommended {
+            background: #d5f4e6;
+            border-color: #27ae60;
+            transform: scale(1.05);
+        }
+        
+        .action-card.likely {
+            background: #e8f4fd;
+            border-color: #3498db;
+        }
+        
+        .action-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .action-prob {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .hand-analysis {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .analysis-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+        
+        .recommendation {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            margin-top: 20px;
+        }
+        
+        .error {
+            background: #fadbd8;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background: #d5f4e6;
+            color: #27ae60;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .card-display {
+            display: inline-block;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 5px 8px;
+            margin: 2px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .spades, .clubs { color: #000; }
+        .hearts, .diamonds { color: #e74c3c; }
+        
+        .info-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+        
+        .info-box.card-format {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        
+        .info-box.pot-betting {
+            background: #e7f3ff;
+            border-color: #0066cc;
+        }
+        
+        .info-box.position-guide {
+            background: #f0f8ff;
+            border-color: #4169e1;
+        }
+        
+        .info-box.hand-examples {
+            background: #f8f9fa;
+            border-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎰 实用德州扑克AI助手</h1>
+            <p>支持多人桌、具体手牌输入、专业位置分析 (Vercel版)</p>
+        </div>
+        
+        <div class="poker-table">
+            <div class="input-section">
+                <h3 class="section-title">🎮 游戏设置</h3>
+                
+                <div class="form-group">
+                    <label>桌子人数</label>
+                    <select id="numPlayers">
+                        <option value="6" selected>6人桌 (6-max)</option>
+                        <option value="5">5人桌 (5-max)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>你的位置</label>
+                    <select id="position">
+                        <option value="UTG">UTG (枪口位)</option>
+                        <option value="MP">MP (中位)</option>
+                        <option value="CO">CO (关煞位)</option>
+                        <option value="BTN" selected>BTN (按钮位)</option>
+                        <option value="SB">SB (小盲位)</option>
+                        <option value="BB">BB (大盲位)</option>
+                    </select>
+                    <div class="info-box position-guide">
+                        <strong>🎯 位置详解:</strong><br>
+                        <strong>早期位置 (紧凶策略):</strong><br>
+                        • <strong>UTG (Under The Gun/枪口位):</strong> 第一个行动，信息最少，需要最强的起手牌。只玩AA,KK,QQ,JJ,AKs,AKo等顶级牌<br>
+                        • <strong>MP (Middle Position/中位):</strong> 仅6人桌有，可以稍微放宽要求，增加AQ,KQ等牌<br><br>
+                        <strong>后期位置 (积极策略):</strong><br>
+                        • <strong>CO (Cut Off/关煞位):</strong> 倒数第二个行动，位置优势明显，可以玩更多牌型，包括投机牌<br>
+                        • <strong>BTN (Button/按钮位):</strong> 最后行动，位置最佳，可以玩最宽的范围，甚至用弱牌偷盲<br><br>
+                        <strong>盲注位置 (被动位置):</strong><br>
+                        • <strong>SB (Small Blind/小盲位):</strong> 翻牌后第一个行动，位置劣势，起手牌要求较高<br>
+                        • <strong>BB (Big Blind/大盲位):</strong> 已投入盲注，有底池赔率保护，可以看更多翻牌<br><br>
+                        <strong>位置策略要点:</strong> 后位可以看到前面玩家的行动再做决定，因此可以玩更多牌型；前位信息不足，必须用强牌进入底池
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>你的底牌</label>
+                    <div class="card-input">
+                        <input type="text" id="card1" placeholder="As" maxlength="2">
+                        <input type="text" id="card2" placeholder="Kh" maxlength="2">
+                    </div>
+                    <div class="info-box card-format">
+                        <strong>🎴 牌面输入格式说明:</strong><br>
+                        <strong>花色字母:</strong> s=♠黑桃, h=♥红桃, d=♦方块, c=♣梅花<br>
+                        <strong>点数字母:</strong> A,K,Q,J,T,9,8,7,6,5,4,3,2 (注意:10用T表示)<br>
+                        <strong>示例:</strong> As=黑桃A, Kh=红桃K, Qd=方块Q, Jc=梅花J, Ts=黑桃10<br>
+                        <strong>常见起手牌:</strong> AA, KK, QQ, JJ, AKs, AKo, AQ, KQ, TT, 99
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>公共牌 (可选)</label>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                        <input type="text" id="flop1" placeholder="翻牌1" maxlength="2">
+                        <input type="text" id="flop2" placeholder="翻牌2" maxlength="2">
+                        <input type="text" id="flop3" placeholder="翻牌3" maxlength="2">
+                        <input type="text" id="turn" placeholder="转牌" maxlength="2">
+                        <input type="text" id="river" placeholder="河牌" maxlength="2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>底池大小</label>
+                        <input type="number" id="potSize" value="100">
+                        <small style="color: #6c757d;">当前底池中的总筹码数量</small>
+                    </div>
+                    <div class="form-group">
+                        <label>需要跟注</label>
+                        <input type="number" id="betToCall" value="20">
+                        <small style="color: #6c757d;">轮到你时需要跟注的筹码数(0=可以过牌)</small>
+                    </div>
+                </div>
+                
+                <div class="info-box pot-betting">
+                    <strong>💰 底池和下注说明:</strong><br>
+                    <strong>底池大小:</strong> 桌面上已有的总筹码(包括盲注、前面玩家的下注等)<br>
+                    <strong>需要跟注:</strong> 你需要投入多少筹码才能继续游戏<br>
+                    <strong>常见情况:</strong><br>
+                    • 需要跟注=0 → 可以过牌(CHECK)<br>
+                    • 需要跟注>0 → 必须跟注(CALL)或加注(RAISE)或弃牌(FOLD)<br>
+                    <strong>示例:</strong> 底池100，需跟注20 → 底池赔率=20/(100+20)=16.7%
+                </div>
+                
+                <div class="form-group">
+                    <label>你的筹码量</label>
+                    <input type="number" id="stackSize" value="1000">
+                </div>
+                
+                <button class="btn success" onclick="getAIRecommendation()">获取AI建议</button>
+                <button class="btn" onclick="randomizeHand()">随机手牌</button>
+                <button class="btn" onclick="loadExample()">加载示例</button>
+                
+                <div class="info-box hand-examples">
+                    <strong>📋 快速示例:</strong><br>
+                    <strong>强起手牌:</strong> AA, KK, QQ, JJ, AKs, AKo, AQs<br>
+                    <strong>中等起手牌:</strong> TT, 99, AJ, AT, KQ, KJ<br>
+                    <strong>投机起手牌:</strong> 77, 66, A9s, KTs, QJs, JTs<br>
+                    <strong>边缘起手牌:</strong> 55, 44, A8o, K9o, QTo<br>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h3 class="section-title">🤖 AI分析结果</h3>
+                
+                <div id="loadingMessage" style="text-align: center; padding: 40px; display: none;">
+                    <div style="border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                    <p>AI正在分析中...</p>
+                </div>
+                
+                <div id="resultArea" style="display: none;">
+                    <div id="handDisplay" class="hand-analysis"></div>
+                    
+                    <div id="actionsDisplay" class="actions-display"></div>
+                    
+                    <div id="analysisDisplay" class="hand-analysis"></div>
+                    
+                    <div id="recommendationDisplay" class="recommendation"></div>
+                </div>
+                
+                <div id="defaultMessage" style="text-align: center; padding: 40px; color: #7f8c8d;">
+                    <p>📊 设置游戏参数后点击"获取AI建议"查看专业分析</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="poker-ai.js"></script>
+    
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>
